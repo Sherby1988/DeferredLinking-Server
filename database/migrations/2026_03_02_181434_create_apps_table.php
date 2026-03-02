@@ -1,0 +1,29 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('apps', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->string('api_key', 64)->unique();
+            $table->string('bundle_id_ios');
+            $table->string('bundle_id_android');
+            $table->string('app_store_url');
+            $table->string('play_store_url');
+            $table->string('custom_domain')->nullable()->unique();
+            $table->string('uri_scheme');
+            $table->timestamps();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('apps');
+    }
+};
