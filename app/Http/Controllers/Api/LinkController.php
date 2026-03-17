@@ -31,16 +31,26 @@ class LinkController extends Controller
         /** @var App $app */
         $app = $request->attributes->get('app');
 
-        $shortCode = $this->shortCodeService->generate();
-
         $domain = $app->custom_domain ?? config('deferred_linking.default_domain');
         $protocol = app()->environment('production') ? 'https' : 'http';
-        $shortUrl = "{$protocol}://{$domain}/{$shortCode}";
 
-        $link = Link::create(array_merge($request->validated(), [
-            'app_id' => $app->id,
-            'short_code' => $shortCode,
-        ]));
+        $link = null;
+        for ($attempt = 0; $attempt < 3; $attempt++) {
+            try {
+                $shortCode = $this->shortCodeService->generate();
+                $link = Link::create(array_merge($request->validated(), [
+                    'app_id' => $app->id,
+                    'short_code' => $shortCode,
+                ]));
+                break;
+            } catch (\Illuminate\Database\UniqueConstraintViolationException) {
+                if ($attempt === 2) {
+                    throw new \RuntimeException('Failed to generate a unique short code. Please try again.');
+                }
+            }
+        }
+
+        $shortUrl = "{$protocol}://{$domain}/{$link->short_code}";
 
         return response()->json([
             'link' => $link,

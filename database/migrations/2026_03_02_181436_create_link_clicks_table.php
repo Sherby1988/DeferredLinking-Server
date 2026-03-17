@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('link_clicks', function (Blueprint $table) {
             $table->id();
             $table->foreignId('link_id')->constrained('links')->cascadeOnDelete();
-            $table->foreignId('app_id')->constrained('apps');
+            $table->foreignId('app_id')->constrained('apps')->cascadeOnDelete();
             $table->string('ip_address', 45);
             $table->text('user_agent');
             $table->string('platform', 16);

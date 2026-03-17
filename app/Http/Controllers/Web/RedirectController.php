@@ -20,7 +20,12 @@ class RedirectController extends Controller
 
     public function handle(Request $request, string $shortCode): View|\Illuminate\Http\Response
     {
-        $link = Link::where('short_code', $shortCode)->first();
+        $app = $request->attributes->get('app');
+        $query = Link::where('short_code', $shortCode);
+        if ($app) {
+            $query->where('app_id', $app->id);
+        }
+        $link = $query->first();
 
         if (!$link || $link->isExpired()) {
             abort(404);
@@ -56,6 +61,12 @@ class RedirectController extends Controller
 
         $app = $link->app;
 
+        // Extract numeric App Store ID from app_store_url for Smart App Banner
+        $appleAppId = null;
+        if ($app->app_store_url && preg_match('/\/id(\d+)/', $app->app_store_url, $m)) {
+            $appleAppId = $m[1];
+        }
+
         return view('redirect.index', [
             'link' => $link,
             'app' => $app,
@@ -65,6 +76,8 @@ class RedirectController extends Controller
             'appStoreUrl' => $app->app_store_url,
             'playStoreUrl' => $app->play_store_url,
             'fallbackUrl' => $link->fallback_url,
+            'appleAppId' => $appleAppId,
+            'androidPackage' => $app->bundle_id_android,
         ]);
     }
 }
